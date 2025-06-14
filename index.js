@@ -21,7 +21,7 @@ if (process.env.mode === 'production') {
     app.use(cors())
 } else {
     app.use(cors({
-        origin: ["http://localhost:5174", "http://localhost:5173","https://assyria-furniture.netlify.app/"],
+        origin: ["http://localhost:5174", "http://localhost:5173","https://assyria-furniture.netlify.app"],
         credentials: true,
     }))
 }
