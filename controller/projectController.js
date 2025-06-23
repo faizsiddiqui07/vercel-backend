@@ -1,54 +1,55 @@
 const moment = require('moment');
-const productModel = require('../models/productModel');
 const cloudinary = require("cloudinary");
+const projectModel = require('../models/projectModel');
 
-// Add New Product
-const add_product = async (req, res) => {
+// Add New Project
+const add_project = async (req, res) => {
+
     try {
-        const { productCode, category } = req.body;
+        const { projectName, bookingAmount, ownershipPlan, unitBreakdown } = req.body;
 
-        if (!productCode || !category) {
+        if (!projectName || !bookingAmount || !ownershipPlan || !unitBreakdown) {
             return res.json({
-                message: 'All fields are required',
+                message: 'Required fields are missing',
                 error: true,
                 success: false
             });
         }
 
-        const slug = productCode.split('/').join('-');
-        const newProduct = new productModel({
+        const slug = projectName.split(' ').join('-');
+        const newProject = new projectModel({
             ...req.body,
             slug,
             date: moment().format('LL'),
         });
 
-        const savedProduct = await newProduct.save();
+        const savedProject = await newProject.save();
 
         return res.status(201).json({
-            message: "Product uploaded successfully",
+            message: "Project created successfully",
             error: false,
             success: true,
-            data: savedProduct
+            data: savedProject
         });
     } catch (error) {
-        console.error('Error uploading product:', error);
+        console.error('Error uploading project:', error);
         return res.status(400).json({
-            message: 'Error uploading product',
+            message: 'Error uploading project',
             error: true,
             success: false
         });
     }
 };
 
-// Dashboard - Get All Products
-const get_dashboard_product = async (req, res) => {
+// Dashboard - Get All Projects
+const get_dashboard_project = async (req, res) => {
     try {
-        const allProducts = await productModel.find().sort({ createdAt: -1 });
+        const allProjects = await projectModel.find().sort({ createdAt: -1 });
         return res.status(200).json({
-            message: "All Products",
+            message: "All Projects",
             success: true,
             error: false,
-            data: allProducts
+            data: allProjects
         });
     } catch (error) {
         return res.status(400).json({
@@ -59,43 +60,43 @@ const get_dashboard_product = async (req, res) => {
     }
 };
 
-// Update Product Status
-const update_product_status = async (req, res) => {
+// Update Project Status
+const update_project_status = async (req, res) => {
     try {
-        const { product_id } = req.params;
+        const { project_id } = req.params;
         const { status } = req.body;
 
-        const updatedStatus = await productModel.findByIdAndUpdate(
-            product_id,
+        const updatedStatus = await projectModel.findByIdAndUpdate(
+            project_id,
             { status },
             { new: true }
         );
 
         return res.status(200).json({
-            message: 'Product status updated successfully',
+            message: 'Project status updated successfully',
             updatedStatus
         });
     } catch (error) {
         return res.status(500).json({
-            message: 'Error updating product status',
+            message: 'Error updating project status',
             error: true
         });
     }
 };
 
-// Delete Product and Images from Cloudinary
-const delete_product = async (req, res) => {
-    const { product_id } = req.params;
+// Delete Project and Images from Cloudinary
+const delete_project = async (req, res) => {
+    const { project_id } = req.params;
 
     try {
-        const product = await productModel.findById(product_id);
+        const project = await projectModel.findById(project_id);
 
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
         }
 
-        if (Array.isArray(product.productImage)) {
-            for (const img of product.productImage) {
+        if (Array.isArray(project.projectImages)) {
+            for (const img of project.projectImages) {
                 let public_id = "";
 
                 if (typeof img === "object" && img.public_id) {
@@ -113,34 +114,36 @@ const delete_product = async (req, res) => {
             }
         }
 
-        await productModel.findByIdAndDelete(product_id);
+        await projectModel.findByIdAndDelete(project_id);
 
-        return res.status(200).json({ message: 'Product deleted successfully' });
+        return res.status(200).json({ message: 'Project deleted successfully' });
     } catch (error) {
         console.error("Error deleting product:", error);
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
 
-// Get Product By ID
-const get_categorywise_product = async (req, res) => {
-    try {
-        const { product_id } = req.params;
-        const product = await productModel.findById(product_id);
+// Get Project By ID
+const get_categorywise_project = async (req, res) => {
 
-        if (!product) {
+    try {
+        const { project_id } = req.params;
+
+        const project = await projectModel.findById(project_id);
+
+        if (!project) {
             return res.status(404).json({
-                message: 'Product not found',
+                message: 'Project not found',
                 error: true,
                 success: false
             });
         }
 
         return res.status(200).json({
-            message: "Product fetched",
+            message: "Project fetched",
             error: false,
             success: true,
-            data: product
+            data: project
         });
     } catch (error) {
         return res.status(500).json({
@@ -151,54 +154,69 @@ const get_categorywise_product = async (req, res) => {
     }
 };
 
-// Update Product
-const update_categorywise_product = async (req, res) => {
+// Update Project
+const update_categorywise_project = async (req, res) => {
     try {
         const {
-            productCode, category, productImage, price,
-            discountedPrice, isFurniture, description, color, colorName, productDimensions, careInstructions, frameMaterial, seatLength, seatHeight,seatDepth, seatCapacity,storage,
-            pillowIncluded
+            projectName,
+            projectAddress,
+            projectImages,
+            projectOverview,
+            landArea,
+            builtUpArea,
+            functionality,
+            amenities,
+            targetIRR,
+            peRatio,
+            possessionStatus,
+            targetRentalYield,
+            projectAmount,
+            bookingAmount,
+            ownershipPlan,
+            unitBreakdown,
+            projectStatus,
+            description,
         } = req.body;
 
-        const updatedProduct = await productModel.findByIdAndUpdate(
-            req.params.product_id,
+        const updatedProject = await projectModel.findByIdAndUpdate(
+            req.params.project_id,
             {
-                productCode,
-                category,
-                slug: productCode.split('/').join('-'),
-                productImage,
-                price,
-                discountedPrice,
-                isFurniture,
+                projectName,
+                projectAddress,
+                slug: projectName.split(' ').join('-'),
+                projectImages,
+                projectOverview,
+                landArea,
+                builtUpArea,
+                functionality,
+                amenities,
+                targetIRR,
+                peRatio,
+                possessionStatus,
+                targetRentalYield,
+                projectAmount,
+                bookingAmount,
+                ownershipPlan,
+                unitBreakdown,
+                projectStatus,
                 description,
-                color,
-                colorName,
-                productDimensions,
-                careInstructions,
-                frameMaterial,
-                seatLength,
-                seatHeight,
-                seatDepth,
-                seatCapacity,
-                storage,
-                pillowIncluded
             },
             { new: true }
         );
 
-        if (!updatedProduct) {
+        if (!updatedProject) {
             return res.status(404).json({
-                message: 'Product not found',
+                message: 'Project not found',
                 error: true,
                 success: false
             });
         }
 
         return res.json({
-            message: 'Product updated successfully',
+            message: 'Project updated successfully',
             error: false,
             success: true,
-            product: updatedProduct
+            product: updatedProject
         });
     } catch (error) {
         return res.status(500).json({
@@ -208,8 +226,10 @@ const update_categorywise_product = async (req, res) => {
         });
     }
 };
+ 
 
-// Get Product By Category (Website)
+
+// Get Project By Category (Website)
 const get_product_by_category = async (req, res) => {
     const { category } = req.params;
 
@@ -226,7 +246,7 @@ const get_product_by_category = async (req, res) => {
     }
 };
 
-// Get Products by Specific Category
+// Get Project by Specific Category
 const get_category = async (req, res) => {
     try {
         const { getCategory } = req.body;
@@ -243,7 +263,7 @@ const get_category = async (req, res) => {
     }
 };
 
-// Get Only Furniture Products
+// Get Only Furniture Project
 const get_furniture_only = async (req, res) => {
     try {
         const furnitureProducts = await productModel.find({
@@ -262,7 +282,7 @@ const get_furniture_only = async (req, res) => {
     }
 };
 
-// Get New Furniture Products
+// Get New Furniture Project
 const get_new_products = async (req, res) => {
     try {
         const newProducts = await productModel.find({
@@ -288,24 +308,24 @@ const get_home_solution = async (req, res) => {
     }
 };
 
-// Get Product Details by Slug
-const get_products_details = async (req, res) => {
+// Get Project Details by Slug
+const get_project_details = async (req, res) => {
     try {
-        const { productSlug } = req.body;
+        const { projectSlug } = req.body;
 
-        const product = await productModel.findOne({ slug: productSlug });
+        const project = await projectModel.findOne({ slug: projectSlug });
 
-        if (!product) {
+        if (!project) {
             return res.status(404).json({
-                message: 'Product not found',
+                message: 'Project not found',
                 success: false,
                 error: true
             });
         }
 
         return res.status(200).json({
-            data: product,
-            message: "Product details fetched",
+            data: project,
+            message: "Project details fetched",
             success: true,
             error: false,
         });
@@ -318,7 +338,7 @@ const get_products_details = async (req, res) => {
     }
 };
 
-// Search Products
+// Search Project
 const search_products = async (req, res) => {
     try {
         const query = req.query.q;
@@ -353,17 +373,17 @@ const search_products = async (req, res) => {
 
 // Exports
 module.exports = {
-    add_product,
-    get_dashboard_product,
-    update_product_status,
-    delete_product,
-    get_categorywise_product,
-    update_categorywise_product,
+    add_project,
+    get_dashboard_project,
+    update_project_status,
+    delete_project,
+    get_categorywise_project,
+    update_categorywise_project,
     get_product_by_category,
     get_category,
     get_furniture_only,
     get_new_products,
     get_home_solution,
-    get_products_details,
+    get_project_details,
     search_products
 };
